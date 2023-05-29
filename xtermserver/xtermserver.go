@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net/http"
 	"path"
+	"reflect"
 	"time"
 
 	"github.com/docktermj/cloudshell/pkg/xtermjs"
@@ -53,6 +54,8 @@ func (httpServer *XtermServerImpl) Serve(ctx context.Context) error {
 	// configure routing
 	router := mux.NewRouter()
 
+	fmt.Printf(">>>>>> router: %s\n", reflect.TypeOf(router))
+
 	// this is the endpoint for xterm.js to connect to
 	xtermjsHandlerOptions := xtermjs.HandlerOpts{
 		AllowedHostnames:     httpServer.AllowedHostnames,
@@ -67,7 +70,11 @@ func (httpServer *XtermServerImpl) Serve(ctx context.Context) error {
 		MaxBufferSizeBytes:   httpServer.MaxBufferSizeBytes,
 	}
 
+	fmt.Printf(">>>>>> xtermjsHandlerOptions: %s\n", reflect.TypeOf(xtermjsHandlerOptions))
+
 	router.HandleFunc(httpServer.PathXtermjs, xtermjs.GetHandler(xtermjsHandlerOptions))
+
+	fmt.Printf(">>>>>> xtermjs.GetHandler(xtermjsHandlerOptions): %s\n", xtermjs.GetHandler(xtermjsHandlerOptions))
 
 	// readiness probe endpoint
 	router.HandleFunc(httpServer.PathReadiness, func(w http.ResponseWriter, r *http.Request) {
