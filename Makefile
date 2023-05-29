@@ -111,13 +111,13 @@ publish-ci:
 
 # publishes example docker image of this project
 publish-example:
-	@$(MAKE) package-example id=${id}	
-	@$(MAKE) publish-example-ci id=${id}	
+	@$(MAKE) package-example id=${id}
+	@$(MAKE) publish-example-ci id=${id}
 
 # publishes example docker image of this project without running package
 publish-example-ci:
 	-docker push $(image_url)-${id}:latest
-	docker push $(image_url)-${id}:$(version)	
+	docker push $(image_url)-${id}:$(version)
 
 # exports this image into a tarball (use in ci cache)
 export: package
@@ -143,3 +143,15 @@ import-example:
 	mkdir -p ./.ssh
 	ssh-keygen -t rsa -b 8192 -f ./.ssh/id_rsa -q -N ""
 	cat ./.ssh/id_rsa | base64 -w 0 > ./.ssh/id_rsa.base64
+
+
+# -----------------------------------------------------------------------------
+# Build
+# -----------------------------------------------------------------------------
+
+.PHONY: dependencies
+dependencies:
+	@go get -u ./...
+	@go get -t -u ./...
+	@go mod tidy
+
