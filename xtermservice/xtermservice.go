@@ -67,19 +67,22 @@ func (xtermService *XtermServiceImpl) Handler(ctx context.Context) *http.ServeMu
 		MaxBufferSizeBytes:   xtermService.MaxBufferSizeBytes,
 	}
 
-	// fmt.Printf(">>>>>> xtermjs.GetHandler(xtermjsHandlerOptions): %s\n", reflect.TypeOf(xtermjs.GetHandler(xtermjsHandlerOptions)))
+	fmt.Printf(">>>>>> xtermjsHandlerOptions: %v\n", xtermjsHandlerOptions)
 
 	submux := http.NewServeMux()
-	submux.HandleFunc("/", xtermjs.GetHandler(xtermjsHandlerOptions))
+	submux.HandleFunc(xtermService.PathXtermjs, xtermjs.GetHandler(xtermjsHandlerOptions))
 
 	// router.HandleFunc(xtermService.PathXtermjs, xtermjs.GetHandler(xtermjsHandlerOptions))
 
-	// // this is the endpoint for serving xterm.js assets
-	// depenenciesDirectory := path.Join(xtermService.WorkingDir, "./node_modules")
+	// this is the endpoint for serving xterm.js assets
+	depenenciesDirectory := path.Join(xtermService.WorkingDir, "./node_modules")
+	submux.Handle("/assets", http.FileServer(http.Dir(depenenciesDirectory)))
 	// router.PathPrefix("/assets").Handler(http.StripPrefix("/assets", http.FileServer(http.Dir(depenenciesDirectory))))
 
 	// // this is the endpoint for the root path aka website
-	// publicAssetsDirectory := path.Join(xtermService.WorkingDir, "./public")
+	publicAssetsDirectory := path.Join(xtermService.WorkingDir, "./public")
+	submux.Handle("/", http.FileServer(http.Dir(publicAssetsDirectory)))
+
 	// router.PathPrefix("/").Handler(http.FileServer(http.Dir(publicAssetsDirectory)))
 
 	// // start memory logging pulse
