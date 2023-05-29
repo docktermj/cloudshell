@@ -2,14 +2,12 @@ package xtermservice
 
 import (
 	"context"
-	"fmt"
 	"net/http"
 	"path"
-	"reflect"
 	"time"
 
 	"github.com/docktermj/cloudshell/pkg/xtermjs"
-	"github.com/gorilla/mux"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 )
 
 // ----------------------------------------------------------------------------
@@ -38,22 +36,21 @@ type XtermServiceImpl struct {
 // ----------------------------------------------------------------------------
 
 /*
-The Serve method simply prints the 'Something' value in the type-struct.
+The Handler method...
 
 Input
   - ctx: A context to control lifecycle.
 
 Output
-  - Nothing is returned, except for an error.  However, something is printed.
-    See the example output.
+  - http.ServeMux...
 */
 
 func (xtermService *XtermServiceImpl) Handler(ctx context.Context) *http.ServeMux {
 
-	// configure routing
-	// router := mux.NewRouter()
+	rootMux := http.NewServeMux()
 
-	// this is the endpoint for xterm.js to connect to
+	// Add route to xterm.js.
+
 	xtermjsHandlerOptions := xtermjs.HandlerOpts{
 		AllowedHostnames:     xtermService.AllowedHostnames,
 		Arguments:            xtermService.Arguments,
@@ -66,88 +63,21 @@ func (xtermService *XtermServiceImpl) Handler(ctx context.Context) *http.ServeMu
 		KeepalivePingTimeout: time.Duration(xtermService.KeepalivePingTimeout) * time.Second,
 		MaxBufferSizeBytes:   xtermService.MaxBufferSizeBytes,
 	}
+	rootMux.HandleFunc(xtermService.PathXtermjs, xtermjs.GetHandler(xtermjsHandlerOptions))
 
-	fmt.Printf(">>>>>> xtermjsHandlerOptions: %v\n", xtermjsHandlerOptions)
+	// Add route to metrics.
 
-	submux := http.NewServeMux()
-	submux.HandleFunc(xtermService.PathXtermjs, xtermjs.GetHandler(xtermjsHandlerOptions))
+	rootMux.Handle(xtermService.PathMetrics, promhttp.Handler())
 
-	// router.HandleFunc(xtermService.PathXtermjs, xtermjs.GetHandler(xtermjsHandlerOptions))
+	// Add route to xterm.js assets.
 
-	// this is the endpoint for serving xterm.js assets
 	depenenciesDirectory := path.Join(xtermService.WorkingDir, "./node_modules")
-	submux.Handle("/assets", http.FileServer(http.Dir(depenenciesDirectory)))
-	// router.PathPrefix("/assets").Handler(http.StripPrefix("/assets", http.FileServer(http.Dir(depenenciesDirectory))))
+	rootMux.Handle("/assets", http.FileServer(http.Dir(depenenciesDirectory)))
 
-	// // this is the endpoint for the root path aka website
+	// Add route to website.
+
 	publicAssetsDirectory := path.Join(xtermService.WorkingDir, "./public")
-	submux.Handle("/", http.FileServer(http.Dir(publicAssetsDirectory)))
+	rootMux.Handle("/", http.FileServer(http.Dir(publicAssetsDirectory)))
 
-	// router.PathPrefix("/").Handler(http.FileServer(http.Dir(publicAssetsDirectory)))
-
-	// // start memory logging pulse
-	// logWithMemory := createMemoryLog()
-	// go func(tick *time.Ticker) {
-	// 	for {
-	// 		logWithMemory.Debug("tick")
-	// 		<-tick.C
-	// 	}
-	// }(time.NewTicker(time.Second * 30))
-
-	return submux
-}
-
-/*
-The Serve method simply prints the 'Something' value in the type-struct.
-
-Input
-  - ctx: A context to control lifecycle.
-
-Output
-  - Nothing is returned, except for an error.  However, something is printed.
-    See the example output.
-*/
-
-func (xtermService *XtermServiceImpl) Serve(ctx context.Context) error {
-	var err error = nil
-
-	// configure routing
-	router := mux.NewRouter()
-
-	// this is the endpoint for xterm.js to connect to
-	xtermjsHandlerOptions := xtermjs.HandlerOpts{
-		AllowedHostnames:     xtermService.AllowedHostnames,
-		Arguments:            xtermService.Arguments,
-		Command:              xtermService.Command,
-		ConnectionErrorLimit: xtermService.ConnectionErrorLimit,
-		CreateLogger: func(connectionUUID string, r *http.Request) xtermjs.Logger {
-			createRequestLog(r, map[string]interface{}{"connection_uuid": connectionUUID}).Infof("created logger for connection '%s'", connectionUUID)
-			return createRequestLog(nil, map[string]interface{}{"connection_uuid": connectionUUID})
-		},
-		KeepalivePingTimeout: time.Duration(xtermService.KeepalivePingTimeout) * time.Second,
-		MaxBufferSizeBytes:   xtermService.MaxBufferSizeBytes,
-	}
-
-	fmt.Printf(">>>>>> xtermjs.GetHandler(xtermjsHandlerOptions): %s\n", reflect.TypeOf(xtermjs.GetHandler(xtermjsHandlerOptions)))
-
-	router.HandleFunc(xtermService.PathXtermjs, xtermjs.GetHandler(xtermjsHandlerOptions))
-
-	// this is the endpoint for serving xterm.js assets
-	depenenciesDirectory := path.Join(xtermService.WorkingDir, "./node_modules")
-	router.PathPrefix("/assets").Handler(http.StripPrefix("/assets", http.FileServer(http.Dir(depenenciesDirectory))))
-
-	// this is the endpoint for the root path aka website
-	publicAssetsDirectory := path.Join(xtermService.WorkingDir, "./public")
-	router.PathPrefix("/").Handler(http.FileServer(http.Dir(publicAssetsDirectory)))
-
-	// start memory logging pulse
-	logWithMemory := createMemoryLog()
-	go func(tick *time.Ticker) {
-		for {
-			logWithMemory.Debug("tick")
-			<-tick.C
-		}
-	}(time.NewTicker(time.Second * 30))
-
-	return err
+	return rootMux
 }

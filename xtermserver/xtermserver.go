@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/docktermj/cloudshell/pkg/xtermjs"
+	"github.com/docktermj/cloudshell/xtermservice"
 	"github.com/gorilla/mux"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 )
@@ -52,12 +53,43 @@ Output
 func (httpServer *XtermServerImpl) Serve(ctx context.Context) error {
 	rootMux := http.NewServeMux()
 
-	// configure routing
-	// router := mux.NewRouter()
+	xtermService := &xtermservice.XtermServiceImpl{
+		AllowedHostnames:     httpServer.AllowedHostnames,
+		Arguments:            httpServer.Arguments,
+		Command:              httpServer.Command,
+		ConnectionErrorLimit: httpServer.ConnectionErrorLimit,
+		KeepalivePingTimeout: httpServer.KeepalivePingTimeout,
+		MaxBufferSizeBytes:   httpServer.MaxBufferSizeBytes,
+		PathLiveness:         httpServer.PathLiveness,
+		PathMetrics:          httpServer.PathMetrics,
+		PathReadiness:        httpServer.PathReadiness,
+		PathXtermjs:          httpServer.PathXtermjs,
+		ServerAddr:           httpServer.ServerAddr,
+		Port:                 httpServer.Port,
+		WorkingDir:           httpServer.WorkingDir,
+	}
 
-	// fmt.Printf(">>>>>> router: %s\n", reflect.TypeOf(router))
+	xtermMux := xtermService.Handler(ctx)
 
-	// this is the endpoint for xterm.js to connect to
+	rootMux.Handle("/", xtermMux)
+
+	// Start service.
+
+	listenOnAddress := fmt.Sprintf("%s:%v", httpServer.ServerAddr, httpServer.Port)
+	server := http.Server{
+		Addr:    listenOnAddress,
+		Handler: addIncomingRequestLogging(rootMux),
+	}
+
+	fmt.Printf("starting server on interface:port '%s'...", listenOnAddress)
+	return server.ListenAndServe()
+}
+
+func (httpServer *XtermServerImpl) ServeVersion2(ctx context.Context) error {
+	rootMux := http.NewServeMux()
+
+	// Add route to xterm.js.
+
 	xtermjsHandlerOptions := xtermjs.HandlerOpts{
 		AllowedHostnames:     httpServer.AllowedHostnames,
 		Arguments:            httpServer.Arguments,
@@ -70,34 +102,23 @@ func (httpServer *XtermServerImpl) Serve(ctx context.Context) error {
 		KeepalivePingTimeout: time.Duration(httpServer.KeepalivePingTimeout) * time.Second,
 		MaxBufferSizeBytes:   httpServer.MaxBufferSizeBytes,
 	}
-
-	// fmt.Printf(">>>>>> xtermjsHandlerOptions: %s\n", reflect.TypeOf(xtermjsHandlerOptions))
-
 	rootMux.HandleFunc(httpServer.PathXtermjs, xtermjs.GetHandler(xtermjsHandlerOptions))
 
-	// fmt.Printf(">>>>>> xtermjs.GetHandler(xtermjsHandlerOptions): %s\n", xtermjs.GetHandler(xtermjsHandlerOptions))
+	// Add route to metrics.
 
-	// metrics endpoint
 	rootMux.Handle(httpServer.PathMetrics, promhttp.Handler())
 
-	// this is the endpoint for serving xterm.js assets
+	// Add route to xterm.js assets.
+
 	depenenciesDirectory := path.Join(httpServer.WorkingDir, "./node_modules")
 	rootMux.Handle("/assets", http.FileServer(http.Dir(depenenciesDirectory)))
-	// rootMux.PathPrefix("/assets").Handler(http.StripPrefix("/assets", http.FileServer(http.Dir(depenenciesDirectory))))
 
-	// this is the endpoint for the root path aka website
+	// Add route to website.
+
 	publicAssetsDirectory := path.Join(httpServer.WorkingDir, "./public")
 	rootMux.Handle("/", http.FileServer(http.Dir(publicAssetsDirectory)))
-	// rootMux.PathPrefix("/").Handler(http.FileServer(http.Dir(publicAssetsDirectory)))
 
 	// Start service.
-
-	// if err := http.ListenAndServe(fmt.Sprintf(":%d", httpServer.Port), rootMux); err != nil {
-	// 	log.Fatal(err)
-	// }
-	// return err
-
-	// listen
 
 	listenOnAddress := fmt.Sprintf("%s:%v", httpServer.ServerAddr, httpServer.Port)
 	server := http.Server{
@@ -144,8 +165,6 @@ func (httpServer *XtermServerImpl) ServeOriginal(ctx context.Context) error {
 	fmt.Printf(">>>>>> xtermjsHandlerOptions: %s\n", reflect.TypeOf(xtermjsHandlerOptions))
 
 	router.HandleFunc(httpServer.PathXtermjs, xtermjs.GetHandler(xtermjsHandlerOptions))
-
-	fmt.Printf(">>>>>> xtermjs.GetHandler(xtermjsHandlerOptions): %s\n", xtermjs.GetHandler(xtermjsHandlerOptions))
 
 	// readiness probe endpoint
 	router.HandleFunc(httpServer.PathReadiness, func(w http.ResponseWriter, r *http.Request) {
