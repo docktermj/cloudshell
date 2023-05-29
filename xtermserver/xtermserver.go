@@ -51,7 +51,8 @@ Output
 */
 
 func (httpServer *XtermServerImpl) Serve(ctx context.Context) error {
-	rootMux := http.NewServeMux()
+
+	fmt.Println(">>>>>> Version Newest")
 
 	xtermService := &xtermservice.XtermServiceImpl{
 		AllowedHostnames:     httpServer.AllowedHostnames,
@@ -71,24 +72,25 @@ func (httpServer *XtermServerImpl) Serve(ctx context.Context) error {
 
 	xtermMux := xtermService.Handler(ctx)
 
-	rootMux.Handle("/", xtermMux)
-
 	// Start service.
 
 	listenOnAddress := fmt.Sprintf("%s:%v", httpServer.ServerAddr, httpServer.Port)
 	server := http.Server{
 		Addr:    listenOnAddress,
-		Handler: addIncomingRequestLogging(rootMux),
+		Handler: addIncomingRequestLogging(xtermMux),
 	}
 
 	fmt.Printf("starting server on interface:port '%s'...", listenOnAddress)
 	return server.ListenAndServe()
+
 }
 
 func (httpServer *XtermServerImpl) ServeVersion2(ctx context.Context) error {
 	rootMux := http.NewServeMux()
 
 	// Add route to xterm.js.
+
+	fmt.Println(">>>>>> Version 2")
 
 	xtermjsHandlerOptions := xtermjs.HandlerOpts{
 		AllowedHostnames:     httpServer.AllowedHostnames,
