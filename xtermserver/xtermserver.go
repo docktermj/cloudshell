@@ -40,19 +40,16 @@ type XtermServerImpl struct {
 // ----------------------------------------------------------------------------
 
 /*
-The Serve method simply prints the 'Something' value in the type-struct.
+The Serve method serves the XtermService over HTTP.
 
 Input
   - ctx: A context to control lifecycle.
-
-Output
-  - Nothing is returned, except for an error.  However, something is printed.
-    See the example output.
 */
 
 func (httpServer *XtermServerImpl) Serve(ctx context.Context) error {
+	rootMux := http.NewServeMux()
 
-	fmt.Println(">>>>>> Version Newest")
+	// Add XtermService.
 
 	xtermService := &xtermservice.XtermServiceImpl{
 		AllowedHostnames:     httpServer.AllowedHostnames,
@@ -69,28 +66,24 @@ func (httpServer *XtermServerImpl) Serve(ctx context.Context) error {
 		Port:                 httpServer.Port,
 		WorkingDir:           httpServer.WorkingDir,
 	}
-
 	xtermMux := xtermService.Handler(ctx)
+	rootMux.Handle("/", xtermMux)
 
 	// Start service.
 
 	listenOnAddress := fmt.Sprintf("%s:%v", httpServer.ServerAddr, httpServer.Port)
 	server := http.Server{
 		Addr:    listenOnAddress,
-		Handler: addIncomingRequestLogging(xtermMux),
+		Handler: addIncomingRequestLogging(rootMux),
 	}
-
 	fmt.Printf("starting server on interface:port '%s'...", listenOnAddress)
 	return server.ListenAndServe()
-
 }
 
-func (httpServer *XtermServerImpl) ServeVersion2(ctx context.Context) error {
+func (httpServer *XtermServerImpl) DeprecatedServeVersion2(ctx context.Context) error {
 	rootMux := http.NewServeMux()
 
 	// Add route to xterm.js.
-
-	fmt.Println(">>>>>> Version 2")
 
 	xtermjsHandlerOptions := xtermjs.HandlerOpts{
 		AllowedHostnames:     httpServer.AllowedHostnames,
@@ -143,7 +136,7 @@ Output
     See the example output.
 */
 
-func (httpServer *XtermServerImpl) ServeOriginal(ctx context.Context) error {
+func (httpServer *XtermServerImpl) DeprecatedServeOriginal(ctx context.Context) error {
 
 	// configure routing
 	router := mux.NewRouter()

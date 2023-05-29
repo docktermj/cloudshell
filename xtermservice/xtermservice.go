@@ -81,15 +81,4 @@ func (xtermService *XtermServiceImpl) Handler(ctx context.Context) *http.ServeMu
 	rootMux.Handle("/", http.FileServer(http.Dir(publicAssetsDirectory)))
 
 	return rootMux
-
-	// // Start service.
-
-	// listenOnAddress := "0.0.0.0:8080"
-	// server := http.Server{
-	// 	Addr:    listenOnAddress,
-	// 	Handler: addIncomingRequestLogging(rootMux),
-	// }
-
-	// fmt.Printf("starting server on interface:port '%s'...", listenOnAddress)
-	// return server.ListenAndServe()
 }
