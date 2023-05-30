@@ -3,6 +3,7 @@ package xtermservice
 import (
 	"context"
 	"embed"
+	"fmt"
 	"io/fs"
 	"net/http"
 	"text/template"
@@ -23,14 +24,15 @@ type XtermServiceImpl struct {
 	Arguments            []string
 	Command              string
 	ConnectionErrorLimit int
-	HtmlTitle            string // Used in templates
+	HtmlTitle            string
 	KeepalivePingTimeout int
 	MaxBufferSizeBytes   int
-	PathLiveness         string
-	PathMetrics          string
-	PathReadiness        string
-	PathXtermjs          string
-	UrlRoutePrefix       string // Used in templates
+	UrlRoutePrefix       string
+}
+
+type TemplateVariables struct {
+	HtmlTitle      string
+	UrlRoutePrefix string
 }
 
 // ----------------------------------------------------------------------------
@@ -67,7 +69,7 @@ func createRequestLog(r *http.Request, additionalFields ...map[string]interface{
 // Specific URL routes
 // ----------------------------------------------------------------------------
 
-func (xtermService *XtermServiceImpl) populateStaticTemplate(responseWriter http.ResponseWriter, request *http.Request, filepath string) {
+func (xtermService *XtermServiceImpl) populateStaticTemplate(responseWriter http.ResponseWriter, request *http.Request, filepath string, templateVariables TemplateVariables) {
 
 	templateBytes, err := static.ReadFile(filepath)
 	if err != nil {
@@ -81,7 +83,7 @@ func (xtermService *XtermServiceImpl) populateStaticTemplate(responseWriter http
 		return
 	}
 
-	err = templateParsed.Execute(responseWriter, xtermService)
+	err = templateParsed.Execute(responseWriter, templateVariables)
 	if err != nil {
 		http.Error(responseWriter, http.StatusText(500), 500)
 		return
@@ -120,37 +122,48 @@ func (xtermService *XtermServiceImpl) Handler(ctx context.Context) *http.ServeMu
 		KeepalivePingTimeout: time.Duration(xtermService.KeepalivePingTimeout) * time.Second,
 		MaxBufferSizeBytes:   xtermService.MaxBufferSizeBytes,
 	}
-	rootMux.HandleFunc(xtermService.PathXtermjs, xtermjs.GetHandler(xtermjsHandlerOptions))
+	rootMux.HandleFunc("/xterm.js", xtermjs.GetHandler(xtermjsHandlerOptions))
+
+	// Create replacement variables for template pages.
+
+	urlRoutePrefix := ""
+	if len(xtermService.UrlRoutePrefix) > 0 {
+		urlRoutePrefix = fmt.Sprintf("/%s", xtermService.UrlRoutePrefix)
+	}
+	templateVariables := TemplateVariables{
+		HtmlTitle:      xtermService.HtmlTitle,
+		UrlRoutePrefix: urlRoutePrefix,
+	}
 
 	// Add routes for template pages.
 
 	rootMux.HandleFunc("/xterm.html", func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "text/html")
-		xtermService.populateStaticTemplate(w, r, "static/templates/xterm.html")
+		xtermService.populateStaticTemplate(w, r, "static/templates/xterm.html", templateVariables)
 	})
 
 	rootMux.HandleFunc("/terminal.js", func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "text/javascript")
-		xtermService.populateStaticTemplate(w, r, "static/templates/terminal.js")
+		xtermService.populateStaticTemplate(w, r, "static/templates/terminal.js", templateVariables)
 	})
 
 	// Add route for readiness probe.
 
-	rootMux.HandleFunc(xtermService.PathReadiness, func(w http.ResponseWriter, r *http.Request) {
+	rootMux.HandleFunc("/readiness", func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusOK)
 		w.Write([]byte("ok"))
 	})
 
 	// Add route for liveness probe.
 
-	rootMux.HandleFunc(xtermService.PathLiveness, func(w http.ResponseWriter, r *http.Request) {
+	rootMux.HandleFunc("/liveness", func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusOK)
 		w.Write([]byte("ok"))
 	})
 
 	// Add route for metrics.
 
-	rootMux.Handle(xtermService.PathMetrics, promhttp.Handler())
+	rootMux.Handle("/metrics", promhttp.Handler())
 
 	// Add route to static files.
 

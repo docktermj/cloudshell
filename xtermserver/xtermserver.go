@@ -54,10 +54,6 @@ func (xtermServer *XtermServerImpl) Serve(ctx context.Context) error {
 		HtmlTitle:            xtermServer.HtmlTitle,
 		KeepalivePingTimeout: xtermServer.KeepalivePingTimeout,
 		MaxBufferSizeBytes:   xtermServer.MaxBufferSizeBytes,
-		PathLiveness:         xtermServer.PathLiveness,
-		PathMetrics:          xtermServer.PathMetrics,
-		PathReadiness:        xtermServer.PathReadiness,
-		PathXtermjs:          xtermServer.PathXtermjs,
 		UrlRoutePrefix:       xtermServer.UrlRoutePrefix,
 	}
 	xtermMux := xtermService.Handler(ctx)
