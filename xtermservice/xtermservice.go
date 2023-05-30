@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/docktermj/cloudshell/internal/log"
 	"github.com/docktermj/cloudshell/pkg/xtermjs"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 )
@@ -27,7 +28,7 @@ type XtermServiceImpl struct {
 	PathMetrics          string
 	PathReadiness        string
 	PathXtermjs          string
-	ServerAddr           string
+	ServerAddress        string
 	ServerPort           int
 	WorkingDir           string
 }
@@ -38,6 +39,29 @@ type XtermServiceImpl struct {
 
 //go:embed static/*
 var static embed.FS
+
+// ----------------------------------------------------------------------------
+// Internal functions
+// ----------------------------------------------------------------------------
+
+// createRequestLog returns a logger with relevant request fields
+func createRequestLog(r *http.Request, additionalFields ...map[string]interface{}) log.Logger {
+	fields := map[string]interface{}{}
+	if len(additionalFields) > 0 {
+		fields = additionalFields[0]
+	}
+	if r != nil {
+		fields["host"] = r.Host
+		fields["remote_addr"] = r.RemoteAddr
+		fields["method"] = r.Method
+		fields["protocol"] = r.Proto
+		fields["path"] = r.URL.Path
+		fields["request_url"] = r.URL.String()
+		fields["user_agent"] = r.UserAgent()
+		fields["cookies"] = r.Cookies()
+	}
+	return log.WithFields(fields)
+}
 
 // ----------------------------------------------------------------------------
 // Interface methods
@@ -73,25 +97,25 @@ func (xtermService *XtermServiceImpl) Handler(ctx context.Context) *http.ServeMu
 	}
 	rootMux.HandleFunc(xtermService.PathXtermjs, xtermjs.GetHandler(xtermjsHandlerOptions))
 
-	// Add route to readiness probe endpoint.
+	// Add route for readiness probe.
 
 	rootMux.HandleFunc(xtermService.PathReadiness, func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusOK)
 		w.Write([]byte("ok"))
 	})
 
-	// Add route to liveness probe endpoint.
+	// Add route for liveness probe.
 
 	rootMux.HandleFunc(xtermService.PathLiveness, func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusOK)
 		w.Write([]byte("ok"))
 	})
 
-	// Add route to metrics.
+	// Add route for metrics.
 
 	rootMux.Handle(xtermService.PathMetrics, promhttp.Handler())
 
-	// Add directory of static files.
+	// Add route of static files.
 
 	rootDir, err := fs.Sub(static, "static/root")
 	if err != nil {

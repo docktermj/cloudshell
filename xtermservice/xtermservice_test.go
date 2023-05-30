@@ -38,7 +38,7 @@ func teardown() error {
 // Test interface functions
 // ----------------------------------------------------------------------------
 
-func TestXtermServiceImpl_Serve(test *testing.T) {
+func TestXtermServiceImpl_Handler(test *testing.T) {
 
 }
 
@@ -46,6 +46,6 @@ func TestXtermServiceImpl_Serve(test *testing.T) {
 // Examples for godoc documentation
 // ----------------------------------------------------------------------------
 
-func ExampleXtermServiceImpl_Serve() {
+func ExampleXtermServiceImpl_Handler() {
 
 }
