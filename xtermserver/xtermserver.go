@@ -24,14 +24,16 @@ type XtermServerImpl struct {
 	Arguments            []string
 	Command              string
 	ConnectionErrorLimit int
+	HtmlTitle            string
 	KeepalivePingTimeout int
 	MaxBufferSizeBytes   int
 	PathLiveness         string
 	PathMetrics          string
 	PathReadiness        string
 	PathXtermjs          string
-	ServerAddr           string
 	Port                 int
+	ServerAddr           string
+	UrlRoutePrefix       string
 	WorkingDir           string
 }
 
@@ -56,6 +58,7 @@ func (httpServer *XtermServerImpl) Serve(ctx context.Context) error {
 		Arguments:            httpServer.Arguments,
 		Command:              httpServer.Command,
 		ConnectionErrorLimit: httpServer.ConnectionErrorLimit,
+		HtmlTitle:            httpServer.HtmlTitle,
 		KeepalivePingTimeout: httpServer.KeepalivePingTimeout,
 		MaxBufferSizeBytes:   httpServer.MaxBufferSizeBytes,
 		PathLiveness:         httpServer.PathLiveness,
@@ -64,6 +67,7 @@ func (httpServer *XtermServerImpl) Serve(ctx context.Context) error {
 		PathXtermjs:          httpServer.PathXtermjs,
 		ServerAddress:        httpServer.ServerAddr,
 		ServerPort:           httpServer.Port,
+		UrlRoutePrefix:       httpServer.UrlRoutePrefix,
 		WorkingDir:           httpServer.WorkingDir,
 	}
 	xtermMux := xtermService.Handler(ctx)

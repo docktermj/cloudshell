@@ -3,9 +3,9 @@ package xtermservice
 import (
 	"context"
 	"embed"
-	"fmt"
 	"io/fs"
 	"net/http"
+	"text/template"
 	"time"
 
 	"github.com/docktermj/cloudshell/internal/log"
@@ -23,6 +23,7 @@ type XtermServiceImpl struct {
 	Arguments            []string
 	Command              string
 	ConnectionErrorLimit int
+	HtmlTitle            string
 	KeepalivePingTimeout int
 	MaxBufferSizeBytes   int
 	PathLiveness         string
@@ -31,6 +32,7 @@ type XtermServiceImpl struct {
 	PathXtermjs          string
 	ServerAddress        string
 	ServerPort           int
+	UrlRoutePrefix       string
 	WorkingDir           string
 }
 
@@ -62,6 +64,35 @@ func createRequestLog(r *http.Request, additionalFields ...map[string]interface{
 		fields["cookies"] = r.Cookies()
 	}
 	return log.WithFields(fields)
+}
+
+// ----------------------------------------------------------------------------
+// Specific URL routes
+// ----------------------------------------------------------------------------
+
+func (xtermService *XtermServiceImpl) populateTemplate(responseWriter http.ResponseWriter, request *http.Request, filepath string) {
+
+	templateBytes, err := static.ReadFile(filepath)
+	if err != nil {
+		http.Error(responseWriter, http.StatusText(500), 500)
+		return
+	}
+
+	templateParsed, err := template.New("HtmlTemplate").Parse(string(templateBytes))
+	if err != nil {
+		http.Error(responseWriter, http.StatusText(500), 500)
+		return
+	}
+
+	err = templateParsed.Execute(responseWriter, xtermService)
+	if err != nil {
+		http.Error(responseWriter, http.StatusText(500), 500)
+		return
+	}
+}
+
+func (xtermService *XtermServiceImpl) terminalJs(responseWriter http.ResponseWriter, request *http.Request) {
+
 }
 
 // ----------------------------------------------------------------------------
@@ -97,8 +128,20 @@ func (xtermService *XtermServiceImpl) Handler(ctx context.Context) *http.ServeMu
 		MaxBufferSizeBytes:   xtermService.MaxBufferSizeBytes,
 	}
 
-	fmt.Printf(">>>>>> xtermService.PathXtermjs %s\n", xtermService.PathXtermjs)
 	rootMux.HandleFunc(xtermService.PathXtermjs, xtermjs.GetHandler(xtermjsHandlerOptions))
+
+	// Add route for specific template pages.
+
+	rootMux.HandleFunc("/xterm.html", func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "text/html")
+		xtermService.populateTemplate(w, r, "static/root/xterm.html")
+	})
+
+	rootMux.HandleFunc("/terminal.js", func(w http.ResponseWriter, r *http.Request) {
+		xtermService.terminalJs(w, r)
+		w.Header().Set("Content-Type", "text/javascript")
+		xtermService.populateTemplate(w, r, "static/root/terminal.js")
+	})
 
 	// Add route for readiness probe.
 
