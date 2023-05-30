@@ -2,8 +2,11 @@ package xtermservice
 
 import (
 	"context"
+	"embed"
+	"fmt"
+	"io/fs"
 	"net/http"
-	"path"
+	"reflect"
 	"time"
 
 	"github.com/docktermj/cloudshell/pkg/xtermjs"
@@ -30,6 +33,13 @@ type XtermServiceImpl struct {
 	Port                 int
 	WorkingDir           string
 }
+
+// ----------------------------------------------------------------------------
+// Variables
+// ----------------------------------------------------------------------------
+
+//go:embed static/*
+var static embed.FS
 
 // ----------------------------------------------------------------------------
 // Interface methods
@@ -72,13 +82,45 @@ func (xtermService *XtermServiceImpl) Handler(ctx context.Context) *http.ServeMu
 
 	// Add route to xterm.js assets.
 
-	depenenciesDirectory := path.Join(xtermService.WorkingDir, "./node_modules")
-	rootMux.Handle("/assets", http.FileServer(http.Dir(depenenciesDirectory)))
+	// depenenciesDirectory := path.Join(xtermService.WorkingDir, "./node_modules")
+	// rootMux.Handle("/assets", http.FileServer(http.Dir(depenenciesDirectory)))
+
+	// nodeModulesDir, err := fs.Sub(static, "static/node_modules")
+	// if err != nil {
+	// 	panic(err)
+	// }
+	// rootMux.Handle("/assets", http.StripPrefix("/", http.FileServer(http.FS(nodeModulesDir))))
 
 	// Add route to website.
 
-	publicAssetsDirectory := path.Join(xtermService.WorkingDir, "./public")
-	rootMux.Handle("/", http.FileServer(http.Dir(publicAssetsDirectory)))
+	// publicAssetsDirectory := path.Join(xtermService.WorkingDir, "./public")
+	// rootMux.Handle("/", http.FileServer(http.Dir(publicAssetsDirectory)))
+
+	rootDir, err := fs.Sub(static, "static/root")
+	if err != nil {
+		panic(err)
+	}
+
+	// assetsDir, err := fs.Sub(static, "static/root/node_modules")
+	// if err != nil {
+	// 	panic(err)
+	// }
+
+	fs.WalkDir(rootDir, ".", func(path string, d fs.DirEntry, err error) error {
+		if err != nil {
+			panic(err)
+		}
+		fmt.Printf(">>>>>> path: %s\n", path)
+		return nil
+	})
+
+	fmt.Printf(">>>>>> http.FS: %s\n", reflect.TypeOf(http.FS(rootDir)))
+	fmt.Printf(">>>>>> http.FileServer: %s\n", reflect.TypeOf(http.FileServer(http.FS(rootDir))))
+
+	// rootMux.Handle("/assets/", http.StripPrefix("/", http.FileServer(http.FS(assetsDir)))) BAD
+	// rootMux.Handle("/assets/", http.FileServer(http.FS(assetsDir)))
+
+	rootMux.Handle("/", http.StripPrefix("/", http.FileServer(http.FS(rootDir))))
 
 	return rootMux
 }
