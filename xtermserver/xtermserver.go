@@ -63,7 +63,7 @@ func (httpServer *XtermServerImpl) Serve(ctx context.Context) error {
 		PathReadiness:        httpServer.PathReadiness,
 		PathXtermjs:          httpServer.PathXtermjs,
 		ServerAddr:           httpServer.ServerAddr,
-		Port:                 httpServer.Port,
+		ServerPort:           httpServer.Port,
 		WorkingDir:           httpServer.WorkingDir,
 	}
 	xtermMux := xtermService.Handler(ctx)
