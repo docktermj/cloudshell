@@ -66,7 +66,7 @@ func createRequestLog(r *http.Request, additionalFields ...map[string]interface{
 }
 
 // ----------------------------------------------------------------------------
-// Specific URL routes
+// Internal methods
 // ----------------------------------------------------------------------------
 
 func (xtermService *XtermServiceImpl) populateStaticTemplate(responseWriter http.ResponseWriter, request *http.Request, filepath string, templateVariables TemplateVariables) {
