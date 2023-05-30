@@ -14,7 +14,7 @@ func addIncomingRequestLogging(next http.Handler) http.Handler {
 			}
 		}()
 		next.ServeHTTP(w, r)
-		duration := time.Now().Sub(then)
+		duration := time.Since(then)
 		createRequestLog(r).Infof("request completed in %vms", float64(duration.Nanoseconds())/1000000)
 	})
 }

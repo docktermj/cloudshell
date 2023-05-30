@@ -9,7 +9,7 @@ import (
 // Types
 // ----------------------------------------------------------------------------
 
-// The XtermServer interface...
+// The XtermService interface...
 type XtermService interface {
 	Handler(ctx context.Context) *http.ServeMux
 }

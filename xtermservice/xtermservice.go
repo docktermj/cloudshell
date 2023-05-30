@@ -23,17 +23,14 @@ type XtermServiceImpl struct {
 	Arguments            []string
 	Command              string
 	ConnectionErrorLimit int
-	HtmlTitle            string
+	HtmlTitle            string // Used in templates
 	KeepalivePingTimeout int
 	MaxBufferSizeBytes   int
 	PathLiveness         string
 	PathMetrics          string
 	PathReadiness        string
 	PathXtermjs          string
-	ServerAddress        string
-	ServerPort           int
-	UrlRoutePrefix       string
-	WorkingDir           string
+	UrlRoutePrefix       string // Used in templates
 }
 
 // ----------------------------------------------------------------------------
@@ -70,7 +67,7 @@ func createRequestLog(r *http.Request, additionalFields ...map[string]interface{
 // Specific URL routes
 // ----------------------------------------------------------------------------
 
-func (xtermService *XtermServiceImpl) populateTemplate(responseWriter http.ResponseWriter, request *http.Request, filepath string) {
+func (xtermService *XtermServiceImpl) populateStaticTemplate(responseWriter http.ResponseWriter, request *http.Request, filepath string) {
 
 	templateBytes, err := static.ReadFile(filepath)
 	if err != nil {
@@ -89,10 +86,6 @@ func (xtermService *XtermServiceImpl) populateTemplate(responseWriter http.Respo
 		http.Error(responseWriter, http.StatusText(500), 500)
 		return
 	}
-}
-
-func (xtermService *XtermServiceImpl) terminalJs(responseWriter http.ResponseWriter, request *http.Request) {
-
 }
 
 // ----------------------------------------------------------------------------
@@ -127,20 +120,18 @@ func (xtermService *XtermServiceImpl) Handler(ctx context.Context) *http.ServeMu
 		KeepalivePingTimeout: time.Duration(xtermService.KeepalivePingTimeout) * time.Second,
 		MaxBufferSizeBytes:   xtermService.MaxBufferSizeBytes,
 	}
-
 	rootMux.HandleFunc(xtermService.PathXtermjs, xtermjs.GetHandler(xtermjsHandlerOptions))
 
-	// Add route for specific template pages.
+	// Add routes for template pages.
 
 	rootMux.HandleFunc("/xterm.html", func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "text/html")
-		xtermService.populateTemplate(w, r, "static/root/xterm.html")
+		xtermService.populateStaticTemplate(w, r, "static/templates/xterm.html")
 	})
 
 	rootMux.HandleFunc("/terminal.js", func(w http.ResponseWriter, r *http.Request) {
-		xtermService.terminalJs(w, r)
 		w.Header().Set("Content-Type", "text/javascript")
-		xtermService.populateTemplate(w, r, "static/root/terminal.js")
+		xtermService.populateStaticTemplate(w, r, "static/templates/terminal.js")
 	})
 
 	// Add route for readiness probe.
@@ -161,7 +152,7 @@ func (xtermService *XtermServiceImpl) Handler(ctx context.Context) *http.ServeMu
 
 	rootMux.Handle(xtermService.PathMetrics, promhttp.Handler())
 
-	// Add route of static files.
+	// Add route to static files.
 
 	rootDir, err := fs.Sub(static, "static/root")
 	if err != nil {

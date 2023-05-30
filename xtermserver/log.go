@@ -2,7 +2,6 @@ package xtermserver
 
 import (
 	"net/http"
-	"runtime"
 
 	"github.com/docktermj/cloudshell/internal/log"
 )
@@ -26,14 +25,14 @@ func createRequestLog(r *http.Request, additionalFields ...map[string]interface{
 	return log.WithFields(fields)
 }
 
-func createMemoryLog() log.Logger {
-	var memStats runtime.MemStats
-	runtime.ReadMemStats(&memStats)
-	return log.WithFields(map[string]interface{}{
-		"alloc":       memStats.Alloc,
-		"heap_alloc":  memStats.HeapAlloc,
-		"total_alloc": memStats.TotalAlloc,
-		"sys_alloc":   memStats.Sys,
-		"gc_count":    memStats.NumGC,
-	})
-}
+// func createMemoryLog() log.Logger {
+// 	var memStats runtime.MemStats
+// 	runtime.ReadMemStats(&memStats)
+// 	return log.WithFields(map[string]interface{}{
+// 		"alloc":       memStats.Alloc,
+// 		"heap_alloc":  memStats.HeapAlloc,
+// 		"total_alloc": memStats.TotalAlloc,
+// 		"sys_alloc":   memStats.Sys,
+// 		"gc_count":    memStats.NumGC,
+// 	})
+// }
