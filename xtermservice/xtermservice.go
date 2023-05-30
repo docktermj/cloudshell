@@ -3,6 +3,7 @@ package xtermservice
 import (
 	"context"
 	"embed"
+	"fmt"
 	"io/fs"
 	"net/http"
 	"time"
@@ -95,6 +96,8 @@ func (xtermService *XtermServiceImpl) Handler(ctx context.Context) *http.ServeMu
 		KeepalivePingTimeout: time.Duration(xtermService.KeepalivePingTimeout) * time.Second,
 		MaxBufferSizeBytes:   xtermService.MaxBufferSizeBytes,
 	}
+
+	fmt.Printf(">>>>>> xtermService.PathXtermjs %s\n", xtermService.PathXtermjs)
 	rootMux.HandleFunc(xtermService.PathXtermjs, xtermjs.GetHandler(xtermjsHandlerOptions))
 
 	// Add route for readiness probe.
