@@ -67,7 +67,6 @@ func (httpServer *XtermServerImpl) Serve(ctx context.Context) error {
 		WorkingDir:           httpServer.WorkingDir,
 	}
 	xtermMux := xtermService.Handler(ctx)
-	// rootMux.Handle("/", http.StripPrefix("/", xtermMux))  BAD.
 	rootMux.Handle("/", xtermMux)
 
 	// Start service.
