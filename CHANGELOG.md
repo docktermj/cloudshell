@@ -6,6 +6,21 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 [markdownlint](https://dlaa.me/markdownlint/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.2.0] - 2023-05-31
+
+### Changed in 0.2.0
+
+- Capability of turning off logging in `pkg/xtermjs/types.go`
+- Embedded JS files. `xtermservice/static`
+- Added
+  - `cmd/root.go`
+  - `xtermserver/`
+  - `xtermservice/`
+- Added dependencies
+  - github.com/senzing/senzing-tools v0.2.8
+- Updated dependencies
+  - github.com/spf13/viper v1.16.0
+
 ## [0.1.0] - 2023-05-29
 
 ### Changed in 0.1.0
