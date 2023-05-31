@@ -94,7 +94,7 @@ func loadConfigurationFile(cobraCommand *cobra.Command) {
 
 		// Specify configuration file name.
 
-		viper.SetConfigName("view-xterm")
+		viper.SetConfigName("cloudshell")
 		viper.SetConfigType("yaml")
 
 		// Define search path order.

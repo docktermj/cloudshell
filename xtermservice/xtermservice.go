@@ -65,6 +65,11 @@ func createRequestLog(r *http.Request, additionalFields ...map[string]interface{
 	return log.WithFields(fields)
 }
 
+func getCreateLogger(connectionUUID string, r *http.Request) xtermjs.Logger {
+	createRequestLog(r, map[string]interface{}{"connection_uuid": connectionUUID}).Infof("created logger for connection '%s'", connectionUUID)
+	return createRequestLog(nil, map[string]interface{}{"connection_uuid": connectionUUID})
+}
+
 // ----------------------------------------------------------------------------
 // Internal methods
 // ----------------------------------------------------------------------------
@@ -115,10 +120,7 @@ func (xtermService *XtermServiceImpl) Handler(ctx context.Context) *http.ServeMu
 		Arguments:            xtermService.Arguments,
 		Command:              xtermService.Command,
 		ConnectionErrorLimit: xtermService.ConnectionErrorLimit,
-		// CreateLogger: func(connectionUUID string, r *http.Request) xtermjs.Logger {
-		// 	createRequestLog(r, map[string]interface{}{"connection_uuid": connectionUUID}).Infof("created logger for connection '%s'", connectionUUID)
-		// 	return createRequestLog(nil, map[string]interface{}{"connection_uuid": connectionUUID})
-		// },
+		// CreateLogger:         getCreateLogger,
 		KeepalivePingTimeout: time.Duration(xtermService.KeepalivePingTimeout) * time.Second,
 		MaxBufferSizeBytes:   xtermService.MaxBufferSizeBytes,
 	}
