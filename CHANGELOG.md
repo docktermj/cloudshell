@@ -10,12 +10,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed in 0.2.0
 
-- Capability of turning off logging in `pkg/xtermjs/types.go
+- Capability of turning off logging in `pkg/xtermjs/types.go`
 - Embedded JS files. `xtermservice/static`
 - Added
   - `cmd/root.go`
   - `xtermserver/`
   - `xtermservice/`
+- Added dependencies
+  - github.com/senzing/senzing-tools v0.2.8
+- Updated dependencies
+  - github.com/spf13/viper v1.16.0
 
 ## [0.1.0] - 2023-05-29
 
