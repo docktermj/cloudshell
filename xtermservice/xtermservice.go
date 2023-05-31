@@ -115,10 +115,10 @@ func (xtermService *XtermServiceImpl) Handler(ctx context.Context) *http.ServeMu
 		Arguments:            xtermService.Arguments,
 		Command:              xtermService.Command,
 		ConnectionErrorLimit: xtermService.ConnectionErrorLimit,
-		CreateLogger: func(connectionUUID string, r *http.Request) xtermjs.Logger {
-			createRequestLog(r, map[string]interface{}{"connection_uuid": connectionUUID}).Infof("created logger for connection '%s'", connectionUUID)
-			return createRequestLog(nil, map[string]interface{}{"connection_uuid": connectionUUID})
-		},
+		// CreateLogger: func(connectionUUID string, r *http.Request) xtermjs.Logger {
+		// 	createRequestLog(r, map[string]interface{}{"connection_uuid": connectionUUID}).Infof("created logger for connection '%s'", connectionUUID)
+		// 	return createRequestLog(nil, map[string]interface{}{"connection_uuid": connectionUUID})
+		// },
 		KeepalivePingTimeout: time.Duration(xtermService.KeepalivePingTimeout) * time.Second,
 		MaxBufferSizeBytes:   xtermService.MaxBufferSizeBytes,
 	}

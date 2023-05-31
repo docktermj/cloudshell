@@ -25,17 +25,61 @@ type Logger interface {
 	Errorf(string, ...interface{})
 }
 
-type logger struct{}
+type logger struct {
+	IsLogging bool
+}
 
-func (l logger) Trace(i ...interface{})            { fmt.Println(append([]interface{}{"[trace] "}, i...)...) }
-func (l logger) Tracef(s string, i ...interface{}) { fmt.Printf("[trace] "+s+"\n", i...) }
-func (l logger) Debug(i ...interface{})            { fmt.Println(append([]interface{}{"[debug] "}, i...)...) }
-func (l logger) Debugf(s string, i ...interface{}) { fmt.Printf("[debug] "+s+"\n", i...) }
-func (l logger) Info(i ...interface{})             { fmt.Println(append([]interface{}{"[info] "}, i...)...) }
-func (l logger) Infof(s string, i ...interface{})  { fmt.Printf("[info] "+s+"\n", i...) }
-func (l logger) Warn(i ...interface{})             { fmt.Println(append([]interface{}{"[warn] "}, i...)...) }
-func (l logger) Warnf(s string, i ...interface{})  { fmt.Printf("[warn] "+s+"\n", i...) }
-func (l logger) Error(i ...interface{})            { fmt.Println(append([]interface{}{"[error] "}, i...)...) }
-func (l logger) Errorf(s string, i ...interface{}) { fmt.Printf("[error] "+s+"\n", i...) }
+func (l logger) Trace(i ...interface{}) {
+	if l.IsLogging {
+		fmt.Println(append([]interface{}{"[trace] "}, i...)...)
+	}
+}
+func (l logger) Tracef(s string, i ...interface{}) {
+	if l.IsLogging {
+		fmt.Printf("[trace] "+s+"\n", i...)
+	}
+}
+func (l logger) Debug(i ...interface{}) {
+	if l.IsLogging {
+		fmt.Println(append([]interface{}{"[debug] "}, i...)...)
+	}
+}
+func (l logger) Debugf(s string, i ...interface{}) {
+	if l.IsLogging {
+		fmt.Printf("[debug] "+s+"\n", i...)
+	}
+}
+func (l logger) Info(i ...interface{}) {
+	if l.IsLogging {
+		fmt.Println(append([]interface{}{"[info] "}, i...)...)
+	}
+}
+func (l logger) Infof(s string, i ...interface{}) {
+	if l.IsLogging {
+		fmt.Printf("[info] "+s+"\n", i...)
+	}
+}
+func (l logger) Warn(i ...interface{}) {
+	if l.IsLogging {
+		fmt.Println(append([]interface{}{"[warn] "}, i...)...)
+	}
+}
+func (l logger) Warnf(s string, i ...interface{}) {
+	if l.IsLogging {
+		fmt.Printf("[warn] "+s+"\n", i...)
+	}
+}
+func (l logger) Error(i ...interface{}) {
+	if l.IsLogging {
+		fmt.Println(append([]interface{}{"[error] "}, i...)...)
+	}
+}
+func (l logger) Errorf(s string, i ...interface{}) {
+	if l.IsLogging {
+		fmt.Printf("[error] "+s+"\n", i...)
+	}
+}
 
-var defaultLogger = logger{}
+var defaultLogger = logger{
+	IsLogging: false,
+}

@@ -21,10 +21,6 @@ type XtermServerImpl struct {
 	HtmlTitle            string
 	KeepalivePingTimeout int
 	MaxBufferSizeBytes   int
-	PathLiveness         string
-	PathMetrics          string
-	PathReadiness        string
-	PathXtermjs          string
 	ServerAddress        string
 	ServerPort           int
 	UrlRoutePrefix       string
